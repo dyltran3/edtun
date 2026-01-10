@@ -1,16 +1,28 @@
-let pyodideInstance: any = null
+// src/lib/code-execution/pyodide-runner.ts
+import { loadPyodide } from 'pyodide'
+
+// Định nghĩa interface cho Pyodide để tránh dùng 'any' quá nhiều
+interface PyodideInterface {
+  runPython: (code: string) => any
+  runPythonAsync: (code: string) => Promise<any>
+  loadPackage: (names: string | string[]) => Promise<any>
+  setStdout: (options: { batched: (msg: string) => void }) => void
+}
+
+let pyodideInstance: PyodideInterface | null = null
 
 export const initPyodide = async () => {
   if (pyodideInstance) return pyodideInstance
 
   try {
-    // @ts-ignore
+    // CẬP NHẬT: Sử dụng đúng phiên bản 0.29.1 khớp với package.json
+    // @ts-ignore - loadPyodide được import từ script tag hoặc package
     const pyodide = await loadPyodide({
-      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/',
+      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.29.1/full/',
     })
     
-    pyodideInstance = pyodide
-    return pyodide
+    pyodideInstance = pyodide as PyodideInterface
+    return pyodideInstance
   } catch (error) {
     console.error('Failed to load Pyodide:', error)
     throw error
@@ -25,29 +37,21 @@ export const runPythonCode = async (
   try {
     const pyodide = await initPyodide()
 
-    // Redirect stdout to capture print statements
-    pyodide.runPython(`
-import sys
-from io import StringIO
-sys.stdout = StringIO()
-    `)
+    // CẬP NHẬT: Thiết lập custom stdout để bắt output ngay lập tức (Streaming output)
+    // Cách này tốt hơn việc redirect sys.stdout vào StringIO
+    pyodide.setStdout({
+      batched: (msg: string) => {
+        onOutput(msg + '\n') 
+      }
+    })
 
-    // Run the user's code
+    // Chạy code người dùng
     await pyodide.runPythonAsync(code)
 
-    // Get the output
-    const output = pyodide.runPython('sys.stdout.getvalue()')
-    
-    if (output) {
-      onOutput(output)
-    }
-
-    // Reset stdout
-    pyodide.runPython(`
-sys.stdout = sys.__stdout__
-    `)
   } catch (error: any) {
-    onError(error.message || 'Unknown error occurred')
+    // Làm sạch thông báo lỗi Python cho dễ đọc hơn
+    const errorMessage = error.message || 'Unknown error occurred'
+    onError(errorMessage)
   }
 }
 

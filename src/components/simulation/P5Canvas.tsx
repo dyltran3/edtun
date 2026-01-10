@@ -1,11 +1,13 @@
+// src/components/simulation/P5Canvas.tsx
 'use client'
 
 import React, { useEffect, useRef } from 'react'
-import dynamic from 'next/dynamic'
 import { useSimulationStore } from '@/store/simulationStore'
+// Import type cho p5 nếu cần, hoặc dùng any nếu thư viện type chưa tương thích
+import type p5Types from 'p5' 
 
 interface P5CanvasProps {
-  sketch: (p: any) => void
+  sketch: (p: p5Types) => void
   width?: number
   height?: number
 }
@@ -17,35 +19,61 @@ const P5Canvas: React.FC<P5CanvasProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const { setP5Instance } = useSimulationStore()
+  // Dùng ref để giữ instance, tránh phụ thuộc vào state của store để cleanup
+  const p5InstanceRef = useRef<p5Types | null>(null)
 
   useEffect(() => {
+    // Chỉ chạy ở client side
     if (typeof window === 'undefined' || !containerRef.current) return
 
-    // Dynamically import p5
-    import('p5').then((p5Module) => {
-      const p5 = p5Module.default
+    let mounted = true
 
-      // Create new p5 instance
-      const p5Instance = new p5((p: any) => {
-        p.createCanvas(width, height)
-        sketch(p)
-      }, containerRef.current!)
+    const initP5 = async () => {
+      try {
+        // Dynamic import p5 để tránh lỗi "window is not defined" khi build
+        const p5Module = (await import('p5')).default
+        
+        if (!mounted) return
 
-      setP5Instance(p5Instance)
+        // Xóa instance cũ nếu tồn tại (phòng trường hợp strict mode)
+        if (p5InstanceRef.current) {
+          p5InstanceRef.current.remove()
+        }
 
-      // Cleanup
-      return () => {
-        p5Instance.remove()
+        const newP5Instance = new p5Module((p: p5Types) => {
+            // Setup mặc định
+            p.setup = () => {
+               p.createCanvas(width, height)
+            }
+            // Áp dụng sketch của người dùng
+            sketch(p)
+        }, containerRef.current!)
+
+        p5InstanceRef.current = newP5Instance
+        setP5Instance(newP5Instance) // Lưu vào store
+      } catch (error) {
+        console.error("Error initializing P5:", error)
+      }
+    }
+
+    initP5()
+
+    // Cleanup function
+    return () => {
+      mounted = false
+      if (p5InstanceRef.current) {
+        p5InstanceRef.current.remove()
+        p5InstanceRef.current = null
         setP5Instance(null)
       }
-    })
+    }
   }, [sketch, width, height, setP5Instance])
 
   return (
     <div 
       ref={containerRef} 
-      className="flex items-center justify-center bg-white border rounded-lg"
-      style={{ width: '100%', height: '100%' }}
+      className="flex items-center justify-center bg-white dark:bg-gray-900 border rounded-lg overflow-hidden"
+      style={{ width: '100%', height: '100%', minHeight: '400px' }}
     />
   )
 }

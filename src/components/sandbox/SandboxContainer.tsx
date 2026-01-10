@@ -6,7 +6,7 @@ import { PythonEditor } from '../editor/PythonEditor'
 import dynamic from 'next/dynamic'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AIAssistant } from 'src/components/ai/AIAssistant'
+import { AIAssistant } from '@/components/ai/AIAssistant'
 
 const P5Canvas = dynamic(() => import('../simulation/P5Canvas'), { ssr: false })
 
