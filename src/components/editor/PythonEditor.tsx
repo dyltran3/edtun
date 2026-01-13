@@ -8,6 +8,7 @@ import { useEditorStore } from '@/store/editorStore'
 import { runPythonCode } from '@/lib/code-execution/pyodide-runner'
 import { Loader2, Play, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useVisualSync } from '@/hooks/useVisualSync'
 
 export const PythonEditor: React.FC = () => {
   const { 
@@ -21,6 +22,7 @@ export const PythonEditor: React.FC = () => {
   } = useEditorStore()
   
   const [isInitializing, setIsInitializing] = useState(false)
+  useVisualSync()
 
   const handleRun = useCallback(async () => {
     if (isRunning) return

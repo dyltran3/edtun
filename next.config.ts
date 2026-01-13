@@ -4,9 +4,11 @@ import os from "os";
 const turbopackConfig: any = {
   // Enable Turbopack when available and cache to .turbo
   enabled: true,
-  cacheDir: ".turbo",
+  cacheDir: '.turbo',
   // Use (cpuCount - 1) workers where possible
   maxWorkers: Math.max(1, os.cpus().length - 1),
+  // Fix inferred workspace root warning by pinning root to this project
+  root: __dirname,
 };
 
 const nextConfig: NextConfig = {

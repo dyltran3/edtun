@@ -49,6 +49,7 @@ export interface Database {
       }
       courses: {
         Row: {
+          points: number
           id: string
           title: string
           description: string | null

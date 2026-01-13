@@ -41,12 +41,21 @@ const P5Canvas: React.FC<P5CanvasProps> = ({
         }
 
         const newP5Instance = new p5Module((p: p5Types) => {
-            // Setup mặc định
-            p.setup = () => {
-               p.createCanvas(width, height)
+          // Cho phép sketch người dùng override setup/draw, nhưng luôn đảm bảo có canvas
+          sketch(p)
+
+          const originalSetup = p.setup
+          p.setup = () => {
+            p.createCanvas(width, height)
+            if (originalSetup) {
+              originalSetup()
             }
-            // Áp dụng sketch của người dùng
-            sketch(p)
+          }
+
+          // Nếu sketch không định nghĩa draw, tạo draw rỗng để tránh lỗi
+          if (!p.draw) {
+            p.draw = () => {}
+          }
         }, containerRef.current!)
 
         p5InstanceRef.current = newP5Instance

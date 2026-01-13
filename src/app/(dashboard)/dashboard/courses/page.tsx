@@ -1,73 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, Rocket, Clock, Award } from 'lucide-react'
 import Link from 'next/link'
+import { Course } from '@/lib/services/courseService'
+import { Skeleton } from '@/components/ui/skeleton'
 
-// Mock data for demonstration
-const mockCourses = [
-  {
-    id: '1',
-    title: 'Toán Hình Học Lớp 10',
-    description: 'Học hình học qua mô phỏng tương tác và code',
-    mode: 'academic',
-    category: 'math',
-    level: 'beginner',
-    lessons: 12,
-    duration: '6 tuần',
-    points: 120,
-    enrolled: true,
-    progress: 60,
-  },
-  {
-    id: '2',
-    title: 'Vật Lý: Chuyển Động',
-    description: 'Hiểu chuyển động thông qua simulation thực tế',
-    mode: 'academic',
-    category: 'physics',
-    level: 'beginner',
-    lessons: 10,
-    duration: '5 tuần',
-    points: 100,
-    enrolled: false,
-    progress: 0,
-  },
-  {
-    id: '3',
-    title: 'Build a Todo App',
-    description: 'Xây dựng ứng dụng Todo đầy đủ từ A-Z',
-    mode: 'project',
-    category: 'programming',
-    level: 'intermediate',
-    lessons: 8,
-    duration: '4 tuần',
-    points: 200,
-    enrolled: true,
-    progress: 40,
-  },
-  {
-    id: '4',
-    title: 'E-commerce Website',
-    description: 'Tạo website bán hàng hoàn chỉnh với payment',
-    mode: 'project',
-    category: 'programming',
-    level: 'advanced',
-    lessons: 15,
-    duration: '8 tuần',
-    points: 300,
-    enrolled: false,
-    progress: 0,
-  },
-]
-
-export default function CoursesPage() {
+function Page() {
   const [activeTab, setActiveTab] = useState<'all' | 'academic' | 'project'>('all')
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredCourses = mockCourses.filter(course => {
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch('/api/courses')
+        if (!res.ok) throw new Error('Không thể tải khoá học')
+        const data = await res.json()
+        setCourses(data)
+      } catch (err: any) {
+        setError(err.message || 'Đã xảy ra lỗi')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCourses()
+  }, [])
+
+  const filteredCourses = courses.filter(course => {
     if (activeTab === 'all') return true
     return course.mode === activeTab
   })
@@ -89,7 +56,29 @@ export default function CoursesPage() {
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <Card key={idx}>
+                  <CardHeader>
+                    <Skeleton className="h-10 w-10 mb-4" />
+                    <Skeleton className="h-6 w-40 mb-2" />
+                    <Skeleton className="h-4 w-full" />
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-24" />
+                  </CardContent>
+                  <CardFooter>
+                    <Skeleton className="h-10 w-full" />
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="text-red-600">{error}</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course) => (
               <Card key={course.id} className="flex flex-col">
                 <CardHeader>
@@ -109,8 +98,8 @@ export default function CoursesPage() {
                         <Rocket className="w-6 h-6 text-purple-600" />
                       )}
                     </div>
-                    <Badge variant={course.enrolled ? 'default' : 'secondary'}>
-                      {course.enrolled ? 'Đã đăng ký' : course.level}
+                    <Badge variant="secondary">
+                      {course.level}
                     </Badge>
                   </div>
                   
@@ -121,47 +110,27 @@ export default function CoursesPage() {
                 <CardContent className="flex-1">
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4" />
-                      <span>{course.lessons} bài học</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      <span>{course.duration}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
                       <Award className="w-4 h-4" />
-                      <span>{course.points} điểm</span>
+                      <span>Điểm: {course.points || 0}</span>
                     </div>
                   </div>
-
-                  {course.enrolled && course.progress > 0 && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-600">Tiến độ</span>
-                        <span className="font-medium">{course.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all"
-                          style={{ width: `${course.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
 
                 <CardFooter>
                   <Button className="w-full" asChild>
                     <Link href={`/courses/${course.id}`}>
-                      {course.enrolled ? 'Tiếp Tục Học' : 'Xem Chi Tiết'}
+                      Xem Chi Tiết
                     </Link>
                   </Button>
                 </CardFooter>
               </Card>
             ))}
-          </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
   )
 }
+
+export default Page

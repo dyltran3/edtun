@@ -1,27 +1,20 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
-
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '')
-
-export const getGeminiModel = () => {
-  return genAI.getGenerativeModel({ model: 'gemini-pro' })
-}
-
 export const chatWithGemini = async (
   message: string,
   context?: string
 ): Promise<string> => {
   try {
-    const model = getGeminiModel()
-    
-    const prompt = context 
-      ? `Context: ${context}\n\nUser: ${message}\n\nAssistant:`
-      : message
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, context }),
+    })
 
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
-    
-    return text
+    if (!res.ok) {
+      throw new Error('AI request failed')
+    }
+
+    const data = await res.json()
+    return data.reply as string
   } catch (error) {
     console.error('Error chatting with Gemini:', error)
     throw new Error('Failed to get AI response')
