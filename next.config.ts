@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
+import os from "os";
+
+const turbopackConfig: any = {
+  // Enable Turbopack when available and cache to .turbo
+  enabled: true,
+  cacheDir: ".turbo",
+  // Use (cpuCount - 1) workers where possible
+  maxWorkers: Math.max(1, os.cpus().length - 1),
+};
 
 const nextConfig: NextConfig = {
+  turbopack: turbopackConfig,
   // Bỏ qua lỗi TypeScript/ESLint khi build để tránh crash deploy (tùy chọn)
   typescript: {
     ignoreBuildErrors: true,
@@ -10,7 +20,7 @@ const nextConfig: NextConfig = {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        fs: false, 
+        fs: false,
         path: false,
         os: false,
         child_process: false,
