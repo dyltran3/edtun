@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/authStore'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { CurriculumLearningPath } from '@/components/learning/CurriculumLearningPath'
 import { 
   BookOpen, 
   Rocket, 
@@ -206,6 +207,9 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Structured Curriculum Learning Path */}
+      <CurriculumLearningPath />
     </div>
   )
 }

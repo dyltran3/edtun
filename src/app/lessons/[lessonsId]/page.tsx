@@ -1,11 +1,17 @@
 'use client'
 
 import { SandboxContainer } from '@/components/sandbox/SandboxContainer'
+import { LessonViewer } from '@/components/learning/LessionViewer'
 import { useEditorStore } from '@/store/editorStore'
 import { useSimulationStore } from '@/store/simulationStore'
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Lesson } from '@/lib/services/lessonService'
+import { BookOpen, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react'
 
 // Example P5.js sketch for physics simulation (must set p.setup / p.draw directly)
 const exampleSketch = (p: any) => {
@@ -126,13 +132,25 @@ print(f"Damping: {damping}")
 print(f"Ball radius: {ball_radius} px")
 `
 
+type EnhancedLesson = Lesson & {
+  subject?: string | null
+  grade?: number | null
+  topic?: string | null
+  priority?: string | null
+  sequence_number?: number | null
+  lesson_code?: string | null
+}
+
 export default function LessonPage() {
   const { setCode, setLanguage } = useEditorStore()
   const params = useParams()
+  const router = useRouter()
   const lessonId = params?.lessonsId as string
-  const [lesson, setLesson] = useState<Lesson | null>(null)
+  
+  const [lesson, setLesson] = useState<EnhancedLesson | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isTheoryOnly, setIsTheoryOnly] = useState(false)
 
   useEffect(() => {
     setLanguage('python')
@@ -142,13 +160,33 @@ export default function LessonPage() {
     const fetchLesson = async () => {
       try {
         setLoading(true)
+        setError(null)
+        
+        if (!lessonId) {
+          throw new Error('Không tìm thấy ID bài học')
+        }
+
         const res = await fetch(`/api/lessons/${lessonId}`)
-        if (!res.ok) throw new Error('Không thể tải bài học')
-        const data = await res.json()
+        
+        if (!res.ok) {
+          if (res.status === 404) {
+            throw new Error('Bài học không tồn tại')
+          }
+          throw new Error('Không thể tải bài học')
+        }
+
+        const data: EnhancedLesson = await res.json()
         setLesson(data)
-        setCode(data.starter_code || defaultStarterCode)
+        
+        // Set starter code from lesson or use default
+        const starterCode = data.starter_code || defaultStarterCode
+        setCode(starterCode)
+        
+        // Determine if this is theory-only (no code component)
+        setIsTheoryOnly(!data.starter_code)
       } catch (err: any) {
-        setError(err.message || 'Đã xảy ra lỗi')
+        console.error('Error loading lesson:', err)
+        setError(err.message || 'Đã xảy ra lỗi khi tải bài học')
         setCode(defaultStarterCode)
       } finally {
         setLoading(false)
@@ -160,11 +198,167 @@ export default function LessonPage() {
     }
   }, [lessonId, setCode])
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <Button variant="ghost" size="sm" className="mb-6">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Quay lại
+          </Button>
+          
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-3/4" />
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-1/2" />
+            <div className="space-y-2 mt-8">
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !lesson) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="mb-6"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Quay lại
+          </Button>
+
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-red-900">{error || 'Lỗi tải bài học'}</h3>
+                  <p className="text-red-700 text-sm mt-1">
+                    Vui lòng thử lại hoặc quay về danh sách bài học
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // For theory-only lessons or lessons without sandbox
+  if (isTheoryOnly || !lesson.starter_code) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="mb-6"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Quay lại
+          </Button>
+
+          {/* Lesson Header with Metadata */}
+          <LessonViewer lesson={lesson} />
+
+          {/* Navigation Buttons */}
+          <div className="flex gap-3 mt-8">
+            <Button 
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              ← Bài trước
+            </Button>
+            <Button>
+              Bài sau →
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // For interactive lessons with sandbox
   return (
     <SandboxContainer
       lessonId={lessonId}
-      initialCode={lesson?.starter_code || defaultStarterCode}
-      theoryContent={lesson?.theory_content ? <div className="p-4">{JSON.stringify(lesson.theory_content)}</div> : defaultTheory}
+      initialCode={lesson.starter_code || defaultStarterCode}
+      theoryContent={
+        <div className="space-y-4">
+          {/* Lesson Title and Metadata */}
+          <div className="space-y-2 pb-4 border-b">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-blue-600" />
+              <h2 className="text-2xl font-bold">{lesson.title}</h2>
+            </div>
+            <p className="text-gray-600">{lesson.description}</p>
+            
+            {/* Metadata Badges */}
+            {(lesson.lesson_code || lesson.grade || lesson.priority || lesson.sequence_number) && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {lesson.lesson_code && (
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {lesson.lesson_code}
+                  </Badge>
+                )}
+                {lesson.grade && (
+                  <Badge variant="secondary" className="text-xs">
+                    Lớp {lesson.grade}
+                  </Badge>
+                )}
+                {lesson.topic && (
+                  <Badge variant="secondary" className="text-xs">
+                    {lesson.topic}
+                  </Badge>
+                )}
+                {lesson.priority && (
+                  <Badge 
+                    className={`text-xs font-semibold ${
+                      lesson.priority === 'H' ? 'bg-red-100 text-red-800' :
+                      lesson.priority === 'M' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}
+                  >
+                    {lesson.priority === 'H' ? 'Cốt lõi' :
+                     lesson.priority === 'M' ? 'Mở rộng' :
+                     'Tham khảo'}
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-xs">
+                  {lesson.points} points
+                </Badge>
+              </div>
+            )}
+          </div>
+
+          {/* Theory Content */}
+          <div className="prose prose-sm max-w-none">
+            {lesson.theory_content ? (
+              typeof lesson.theory_content === 'object' && 
+              !Array.isArray(lesson.theory_content) && 
+              'content' in lesson.theory_content ? (
+                <div>{(lesson.theory_content as any).content}</div>
+              ) : typeof lesson.theory_content === 'string' ? (
+                <div dangerouslySetInnerHTML={{ __html: lesson.theory_content as string }} />
+              ) : (
+                defaultTheory
+              )
+            ) : (
+              defaultTheory
+            )}
+          </div>
+        </div>
+      }
       simulationSketch={exampleSketch}
     />
   )

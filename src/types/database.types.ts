@@ -98,6 +98,12 @@ export interface Database {
           starter_code: string | null
           solution_code: string | null
           points: number
+          subject: string | null
+          grade: number | null
+          topic: string | null
+          priority: string | null
+          sequence_number: number | null
+          lesson_code: string | null
           created_at: string
           updated_at: string
         }
@@ -112,6 +118,12 @@ export interface Database {
           starter_code?: string | null
           solution_code?: string | null
           points?: number
+          subject?: string | null
+          grade?: number | null
+          topic?: string | null
+          priority?: string | null
+          sequence_number?: number | null
+          lesson_code?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -126,6 +138,12 @@ export interface Database {
           starter_code?: string | null
           solution_code?: string | null
           points?: number
+          subject?: string | null
+          grade?: number | null
+          topic?: string | null
+          priority?: string | null
+          sequence_number?: number | null
+          lesson_code?: string | null
           created_at?: string
           updated_at?: string
         }

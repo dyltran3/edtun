@@ -1,7 +1,6 @@
 'use client'
 
-import React from 'react'
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import React, { useState } from 'react'
 
 interface SplitScreenProps {
   leftPanel: React.ReactNode
@@ -18,33 +17,59 @@ export const SplitScreen: React.FC<SplitScreenProps> = ({
   minLeftSize = 30,
   minRightSize = 30,
 }) => {
+  const [leftSize, setLeftSize] = useState(defaultLeftSize)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleMouseDown = () => {
+    setIsDragging(true)
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return
+
+    const container = e.currentTarget
+    const rect = container.getBoundingClientRect()
+    const newLeftSize = ((e.clientX - rect.left) / rect.width) * 100
+
+    if (newLeftSize >= minLeftSize && 100 - newLeftSize >= minRightSize) {
+      setLeftSize(newLeftSize)
+    }
+  }
+
   return (
-    <div className="h-full w-full">
-      <PanelGroup direction="horizontal">
-        <Panel 
-          defaultSize={defaultLeftSize}
-          minSize={minLeftSize}
-          id="left-panel"
-        >
-          <div className="h-full overflow-auto bg-background">
-            {leftPanel}
-          </div>
-        </Panel>
-        
-        <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-blue-400 transition-colors cursor-col-resize flex items-center justify-center group">
-          <div className="w-1 h-8 bg-gray-400 rounded-full group-hover:bg-blue-500 transition-colors" />
-        </PanelResizeHandle>
-        
-        <Panel 
-          defaultSize={100 - defaultLeftSize}
-          minSize={minRightSize}
-          id="right-panel"
-        >
-          <div className="h-full overflow-auto bg-background">
-            {rightPanel}
-          </div>
-        </Panel>
-      </PanelGroup>
+    <div 
+      className="h-full w-full flex"
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
+      {/* Left Panel */}
+      <div 
+        style={{ width: `${leftSize}%` }}
+        className="h-full overflow-auto bg-background border-r"
+      >
+        {leftPanel}
+      </div>
+
+      {/* Divider */}
+      <div
+        onMouseDown={handleMouseDown}
+        className={`w-1 bg-gray-200 hover:bg-blue-400 transition-colors ${
+          isDragging ? 'bg-blue-500 cursor-col-resize' : 'cursor-col-resize'
+        }`}
+      />
+
+      {/* Right Panel */}
+      <div 
+        style={{ width: `${100 - leftSize}%` }}
+        className="h-full overflow-auto bg-background"
+      >
+        {rightPanel}
+      </div>
     </div>
   )
 }

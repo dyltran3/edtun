@@ -1,12 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { getLessonById } from '@/lib/services/lessonService'
 
 export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const lesson = await getLessonById(params.id)
+    const { id } = await params
+    const lesson = await getLessonById(id)
     if (!lesson) {
       return NextResponse.json({ error: 'Lesson not found' }, { status: 404 })
     }
