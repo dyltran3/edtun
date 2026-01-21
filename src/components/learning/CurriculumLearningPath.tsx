@@ -101,12 +101,15 @@ export const CurriculumLearningPath: React.FC = () => {
     return subject === 'MTH' ? 'Toán' : 'Vật Lý'
   }
 
-  const availableGrades =
+  const defaultGrades = [10, 11, 12]
+  const subjectGrades =
     metadata && selectedSubject ? metadata.gradesBySubject[selectedSubject] || [] : []
+  const availableGrades = subjectGrades.length > 0 ? subjectGrades : defaultGrades
 
   const highPriorityLessons = lessons.filter((l) => l.priority === 'H')
   const mediumPriorityLessons = lessons.filter((l) => l.priority === 'M')
   const lowPriorityLessons = lessons.filter((l) => l.priority === 'L')
+  const hasAnyLessonForSelection = !loading && lessons.length === 0
 
   return (
     <div className="w-full space-y-6">
@@ -188,6 +191,11 @@ export const CurriculumLearningPath: React.FC = () => {
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
+          ) : hasAnyLessonForSelection ? (
+            <ComingSoonCard
+              subjectLabel={getSubjectLabel(selectedSubject)}
+              grade={selectedGrade}
+            />
           ) : highPriorityLessons.length > 0 ? (
             highPriorityLessons.map((lesson) => (
               <LessonCard key={lesson.id} lesson={lesson} />
@@ -202,7 +210,12 @@ export const CurriculumLearningPath: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="medium" className="space-y-3">
-          {mediumPriorityLessons.length > 0 ? (
+          {hasAnyLessonForSelection ? (
+            <ComingSoonCard
+              subjectLabel={getSubjectLabel(selectedSubject)}
+              grade={selectedGrade}
+            />
+          ) : mediumPriorityLessons.length > 0 ? (
             mediumPriorityLessons.map((lesson) => (
               <LessonCard key={lesson.id} lesson={lesson} />
             ))
@@ -216,7 +229,12 @@ export const CurriculumLearningPath: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="low" className="space-y-3">
-          {lowPriorityLessons.length > 0 ? (
+          {hasAnyLessonForSelection ? (
+            <ComingSoonCard
+              subjectLabel={getSubjectLabel(selectedSubject)}
+              grade={selectedGrade}
+            />
+          ) : lowPriorityLessons.length > 0 ? (
             lowPriorityLessons.map((lesson) => (
               <LessonCard key={lesson.id} lesson={lesson} />
             ))
@@ -304,6 +322,24 @@ const LessonCard: React.FC<{ lesson: FilteredLesson }> = ({ lesson }) => {
             <Link href={`/lessons/${lesson.id}`}>Học ngay</Link>
           </Button>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+const ComingSoonCard: React.FC<{ subjectLabel: string; grade: number }> = ({
+  subjectLabel,
+  grade,
+}) => {
+  return (
+    <Card className="bg-blue-50 border border-dashed border-blue-300">
+      <CardContent className="pt-6 text-center space-y-2">
+        <p className="text-sm font-semibold text-blue-800">
+          Lộ trình {subjectLabel} lớp {grade} đang được cập nhật
+        </p>
+        <p className="text-xs text-blue-700">
+          Nội dung bài học sẽ sớm có mặt. Coming soon.
+        </p>
       </CardContent>
     </Card>
   )

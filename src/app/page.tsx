@@ -7,14 +7,14 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-20 px-4">
+      <section className="flex-1 flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 py-20 px-4">
         <div className="max-w-6xl mx-auto text-center space-y-8">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900">
             Ed-Tun STEM
           </h1>
           
           <p className="text-2xl md:text-3xl text-blue-600 font-semibold">
-            "Thấy là Tin"
+            "Thấy là Tin"/* Cần cập nhật lại Slogan */
           </p>
           
           <p className="text-xl text-gray-700 max-w-3xl mx-auto">
@@ -174,7 +174,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+      <section className="py-20 px-4 bg-linear-to-br from-blue-600 to-indigo-700 text-white">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <Award className="w-16 h-16 mx-auto" />
           

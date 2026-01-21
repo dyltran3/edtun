@@ -13,7 +13,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Lesson } from '@/lib/services/lessonService'
 import { BookOpen, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react'
 
-// Example P5.js sketch for physics simulation (must set p.setup / p.draw directly)
 const exampleSketch = (p: any) => {
   let ball: any
 
@@ -64,6 +63,106 @@ const exampleSketch = (p: any) => {
     p.text(`Velocity: ${ball.velocityY.toFixed(2)} m/s`, 10, 20)
     p.text(`Position: ${ball.y.toFixed(0)} px`, 10, 40)
     p.text(`Gravity: ${ball.gravity} m/s²`, 10, 60)
+  }
+}
+
+const calculusSketch = (p: any) => {
+  p.setup = () => {
+    p.createCanvas(600, 400)
+  }
+
+  p.draw = () => {
+    p.background(250)
+
+    const params = useSimulationStore.getState().params
+    const a = params.a !== undefined ? Number(params.a) : 1
+    const b = params.b !== undefined ? Number(params.b) : 0
+    const c = params.c !== undefined ? Number(params.c) : -1
+    const d = params.d !== undefined ? Number(params.d) : 0
+    const x0 = params.x0 !== undefined ? Number(params.x0) : 0
+
+    const toScreenX = (x: number) => p.map(x, -5, 5, 40, p.width - 40)
+    const toScreenY = (y: number) => p.map(y, -5, 5, p.height - 40, 40)
+
+    p.stroke(220)
+    p.strokeWeight(1)
+    const xAxisY = toScreenY(0)
+    const yAxisX = toScreenX(0)
+    p.line(40, xAxisY, p.width - 40, xAxisY)
+    p.line(yAxisX, 40, yAxisX, p.height - 40)
+
+    p.noFill()
+    p.stroke(52, 152, 219)
+    p.beginShape()
+    for (let i = 0; i <= 200; i++) {
+      const x = -5 + (10 * i) / 200
+      const y = a * x * x * x + b * x * x + c * x + d
+      const sx = toScreenX(x)
+      const sy = toScreenY(y)
+      p.vertex(sx, sy)
+    }
+    p.endShape()
+
+    const fx0 = a * x0 * x0 * x0 + b * x0 * x0 + c * x0 + d
+    const derivative = 3 * a * x0 * x0 + 2 * b * x0 + c
+
+    const x1 = -5
+    const y1 = fx0 + derivative * (x1 - x0)
+    const x2 = 5
+    const y2 = fx0 + derivative * (x2 - x0)
+
+    p.stroke(231, 76, 60)
+    p.line(toScreenX(x1), toScreenY(y1), toScreenX(x2), toScreenY(y2))
+
+    p.fill(231, 76, 60)
+    p.noStroke()
+    p.circle(toScreenX(x0), toScreenY(fx0), 6)
+
+    p.fill(0)
+    p.textSize(12)
+    p.text(`x0 = ${x0.toFixed(2)}`, 10, 20)
+    p.text(`f'(x0) = ${derivative.toFixed(2)}`, 10, 40)
+  }
+}
+
+const thermoSketch = (p: any) => {
+  p.setup = () => {
+    p.createCanvas(600, 400)
+  }
+
+  p.draw = () => {
+    p.background(248)
+
+    const params = useSimulationStore.getState().params
+    const temperature = params.temperature !== undefined ? Number(params.temperature) : 300
+    const volume = params.volume !== undefined ? Number(params.volume) : 1
+    const moles = params.moles !== undefined ? Number(params.moles) : 1
+
+    const r = 0.08314
+    let pressure = (moles * r * temperature) / Math.max(volume, 0.1)
+    if (pressure > 10) pressure = 10
+
+    const barHeight = p.map(pressure, 0, 10, 10, p.height - 80)
+
+    const left = 150
+    const right = 450
+    const bottom = p.height - 40
+    const top = 60 + (p.height - 120 - barHeight)
+
+    p.stroke(100)
+    p.noFill()
+    p.rect(left, 60, right - left, p.height - 120)
+
+    p.fill(52, 152, 219, 180)
+    p.noStroke()
+    p.rect(left + 1, top, right - left - 2, bottom - top)
+
+    p.fill(0)
+    p.textSize(12)
+    p.text(`T (K): ${temperature.toFixed(0)}`, 20, 30)
+    p.text(`V: ${volume.toFixed(2)}`, 20, 50)
+    p.text(`n: ${moles.toFixed(2)}`, 20, 70)
+    p.text(`P (atm): ${pressure.toFixed(2)}`, 20, 90)
   }
 }
 
@@ -132,6 +231,28 @@ print(f"Damping: {damping}")
 print(f"Ball radius: {ball_radius} px")
 `
 
+const calculusStarterCode = `a = 1.0
+b = 0.0
+c = -1.0
+d = 0.0
+x0 = 0.0
+
+print("a =", a)
+print("b =", b)
+print("c =", c)
+print("d =", d)
+print("x0 =", x0)
+`
+
+const thermoStarterCode = `temperature = 300.0
+volume = 1.0
+moles = 1.0
+
+print("Temperature (K):", temperature)
+print("Volume (L):", volume)
+print("Moles:", moles)
+`
+
 type EnhancedLesson = Lesson & {
   subject?: string | null
   grade?: number | null
@@ -139,6 +260,44 @@ type EnhancedLesson = Lesson & {
   priority?: string | null
   sequence_number?: number | null
   lesson_code?: string | null
+}
+
+type LessonConfig = {
+  starterCode: string
+  simulationSketch?: (p: any) => void
+  isInteractive: boolean
+}
+
+const getLessonConfig = (lesson: EnhancedLesson): LessonConfig => {
+  if (lesson.lesson_code === 'MTH-12-CAL-H-01') {
+    return {
+      starterCode: calculusStarterCode,
+      simulationSketch: calculusSketch,
+      isInteractive: true,
+    }
+  }
+
+  if (lesson.lesson_code === 'PHY-12-THE-H-01') {
+    return {
+      starterCode: thermoStarterCode,
+      simulationSketch: thermoSketch,
+      isInteractive: true,
+    }
+  }
+
+  if (lesson.starter_code) {
+    return {
+      starterCode: lesson.starter_code,
+      simulationSketch: exampleSketch,
+      isInteractive: true,
+    }
+  }
+
+  return {
+    starterCode: defaultStarterCode,
+    simulationSketch: exampleSketch,
+    isInteractive: false,
+  }
 }
 
 export default function LessonPage() {
@@ -177,13 +336,9 @@ export default function LessonPage() {
 
         const data: EnhancedLesson = await res.json()
         setLesson(data)
-        
-        // Set starter code from lesson or use default
-        const starterCode = data.starter_code || defaultStarterCode
-        setCode(starterCode)
-        
-        // Determine if this is theory-only (no code component)
-        setIsTheoryOnly(!data.starter_code)
+        const config = getLessonConfig(data)
+        setCode(config.starterCode)
+        setIsTheoryOnly(!config.isInteractive)
       } catch (err: any) {
         console.error('Error loading lesson:', err)
         setError(err.message || 'Đã xảy ra lỗi khi tải bài học')
@@ -238,7 +393,7 @@ export default function LessonPage() {
           <Card className="border-red-200 bg-red-50">
             <CardContent className="pt-6">
               <div className="flex gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                 <div>
                   <h3 className="font-semibold text-red-900">{error || 'Lỗi tải bài học'}</h3>
                   <p className="text-red-700 text-sm mt-1">
@@ -253,8 +408,7 @@ export default function LessonPage() {
     )
   }
 
-  // For theory-only lessons or lessons without sandbox
-  if (isTheoryOnly || !lesson.starter_code) {
+  if (isTheoryOnly) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -288,11 +442,12 @@ export default function LessonPage() {
     )
   }
 
-  // For interactive lessons with sandbox
+  const lessonConfig = getLessonConfig(lesson)
+
   return (
     <SandboxContainer
       lessonId={lessonId}
-      initialCode={lesson.starter_code || defaultStarterCode}
+      initialCode={lessonConfig.starterCode}
       theoryContent={
         <div className="space-y-4">
           {/* Lesson Title and Metadata */}
@@ -359,7 +514,7 @@ export default function LessonPage() {
           </div>
         </div>
       }
-      simulationSketch={exampleSketch}
+      simulationSketch={lessonConfig.simulationSketch}
     />
   )
 }
