@@ -123,16 +123,14 @@ export const getAllSubjects = async (): Promise<string[]> => {
       .not('subject', 'is', null)
 
     if (error) {
-      if (error.message.includes('does not exist')) {
-        return ['MTH', 'PHY']
-      }
-      throw error
+      console.warn('⚠️  Using default subjects - curriculum columns not available:', error.message)
+      return ['MTH', 'PHY']
     }
     
     const subjects = Array.from(new Set(data?.map((row: any) => row.subject).filter(Boolean) || []))
-    return subjects.sort()
+    return subjects.length > 0 ? subjects.sort() : ['MTH', 'PHY']
   } catch (err: any) {
-    console.error('Error in getAllSubjects:', err?.message)
+    console.warn('⚠️  Network error in getAllSubjects, using defaults:', err?.message)
     return ['MTH', 'PHY']
   }
 }

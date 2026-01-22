@@ -14,7 +14,7 @@ export default function HomePage() {
           </h1>
           
           <p className="text-2xl md:text-3xl text-blue-600 font-semibold">
-            "Thấy là Tin"/* Cần cập nhật lại Slogan */
+            "Học để Hiểu"
           </p>
           
           <p className="text-xl text-gray-700 max-w-3xl mx-auto">

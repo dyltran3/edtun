@@ -58,10 +58,10 @@ export default function LessonsPage() {
       setLoading(true)
       try {
         const response = await fetch(
-          `/api/lessons/filter?subject=${selectedSubject}&grade=${selectedGrade}`
+          `/api/lessons?subject=${selectedSubject}&grade=${selectedGrade}`
         )
         const data = await response.json()
-        setLessons(data.lessons || [])
+        setLessons(data || [])
       } catch (error) {
         console.error('Error fetching lessons:', error)
         setLessons([])
@@ -320,7 +320,7 @@ const LessonCard: React.FC<{ lesson: FilteredLesson }> = ({ lesson }) => {
           <div className="flex-1">
             <Link href={`/lessons/${lesson.id}`} className="hover:text-blue-600">
               <div className="flex items-start gap-2 mb-2">
-                <BookOpen className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                <BookOpen className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <h3 className="font-bold text-base leading-snug">{lesson.title}</h3>
               </div>
             </Link>
@@ -358,7 +358,7 @@ const LessonCard: React.FC<{ lesson: FilteredLesson }> = ({ lesson }) => {
             </div>
           </div>
 
-          <Button asChild className="flex-shrink-0">
+          <Button asChild className="shrink-0">
             <Link href={`/lessons/${lesson.id}`}>
               <ChevronRight className="w-4 h-4" />
             </Link>

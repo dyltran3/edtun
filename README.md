@@ -11,7 +11,7 @@
 Ed-Tun STEM là một nền tảng EdTech đột phá, giải quyết các hạn chế của giáo dục STEM truyền thống bằng cách kết hợp trực quan hóa tương tác (Interactive Visualization), lập trình thực chiến và tư duy khởi nghiệp.
 
 ### Slogan
-**"Thấy là Tin"** - Biến công thức khô khan thành trải nghiệm học tập sống động
+**"Học để Hiểu"** - Biến công thức khô khan thành trải nghiệm học tập sống động
 
 ## 🎓 Đối Tượng & Mô Hình
 

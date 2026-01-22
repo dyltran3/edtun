@@ -168,11 +168,25 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({ lesson, onStart }) =
         <CardContent>
           {lesson.theory_content ? (
             <div className="prose max-w-none">
-              {/* Render theory content - this can be markdown, HTML, or custom format */}
-              <div dangerouslySetInnerHTML={{ __html: lesson.theory_content.html || '' }} />
+              {typeof lesson.theory_content === 'object' && 
+               lesson.theory_content !== null &&
+               !Array.isArray(lesson.theory_content) && 
+               'content' in lesson.theory_content ? (
+                <div>{lesson.theory_content.content}</div>
+              ) : typeof lesson.theory_content === 'string' ? (
+                <div dangerouslySetInnerHTML={{ __html: lesson.theory_content }} />
+              ) : (
+                <div className="text-gray-600">
+                  <p>Nội dung lý thuyết đang được cập nhật.</p>
+                  <p className="text-sm mt-2">Theory content is being updated.</p>
+                </div>
+              )}
             </div>
           ) : (
-            <p className="text-gray-500">No theory content available</p>
+            <div className="text-gray-500">
+              <p>Chưa có nội dung lý thuyết.</p>
+              <p className="text-sm mt-1">No theory content available.</p>
+            </div>
           )}
         </CardContent>
       </Card>
